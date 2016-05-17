@@ -129,7 +129,6 @@ module controle;
 	wire P1, P2, P3;
 	reg saida;
 	wire data;
-
 	
 	sign Pt1(ptx, pty, p1x, p1y, p2x, p2y, P1);
 	sign Pt2(ptx, pty, p2x, p2y, p3x, p3y, P2);
