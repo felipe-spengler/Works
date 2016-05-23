@@ -1,3 +1,4 @@
+// Trabalho 7 - Update
 module sign(
 	input [11:0]ptx,
 	input [11:0]pty,
@@ -40,7 +41,7 @@ module ROM(
 	reg [11:0]p2y_r;
 	reg [11:0]p3x_r;
 	reg [11:0]p3y_r;
-	
+
 	assign p1x = p1x_r;
 	assign p1y = p1y_r;
 	assign p2x = p2x_r;
@@ -86,15 +87,18 @@ module video_1(
 	input data,
 	output saida
 );
+	
+	reg memoria_video_1 [0:479] [0:639];
 	reg saida_r;
-	assign saida = saida_r;
-	always @(clk)begin
+	assign saida = memoria_video_1 [end_x][end_y];
+	always @(posedge clk)begin
 		if (w == 1) memoria_video_1 [end_x][end_y] = data;
-		else saida_r = memoria_video_1 [end_x][end_y];
+		//$display("Gravou");
+		
 	end
 endmodule
-		
-module controle;
+//module newTrab7(input CLOCK_50);
+module newTrab7;
 	
 	reg clk = 0;
 	reg write = 1;
@@ -108,9 +112,6 @@ module controle;
 	
 	reg [11:0]ptx;
 	reg [11:0]pty;
-
-	reg memoria_video_1 [0:500] [0:500];
-	reg controlador;
 
 	reg [11:0]i;
 	reg [11:0]j;
@@ -129,67 +130,83 @@ module controle;
 	wire P1, P2, P3;
 	reg saida;
 	wire data;
-	
+
+	reg pode_ler = 0;
+
 	sign Pt1(ptx, pty, p1x, p1y, p2x, p2y, P1);
 	sign Pt2(ptx, pty, p2x, p2y, p3x, p3y, P2);
 	sign Pt3(ptx, pty, p3x, p3y, p1x, p1y, P3);
 	ROM R(end_triangulo, p1x_w, p1y_w, p2x_w, p2y_w, p3x_w, p3y_w);
-	video_1 V(clk, w, i, j, saida, data);
+	video_1 V(clk, write, i, j, saida, data);
 
 	always #1 clk = ~clk;
-	always @(count)begin
+	always @(posedge clk)begin
+	//always @(posedge CLOCK_50) begin
 		case(count)
 			0:begin
 				end_triangulo <= 0;
-				count <= count + 1;
+				count <= 1;
 			end
 			1: begin
+				$display (" Triangulo %d", end_triangulo);
 				p1x <= p1x_w;
 				p1y <= p1y_w;
 				p2x <= p2x_w;
 				p2y <= p2y_w;
 				p3x <= p3x_w;
 				p3y <= p3y_w;	
-				
+
 				i <= 0;
 				j <= 0;
-				count <= count + 1;
+				count <= 2;
+				if (end_triangulo > 2) write <= 0;
+				else write <= 1;
 			end
+
+			
 			2: begin
-				for ( i = 0; i < 500; i = i + 1) begin
-					for ( j = 0; j < 500; j = j + 1) begin
-						ptx <= i;
-						pty <= j;
-						controlador <= 0;
-						while (controlador < 2)begin
-							case (controlador)
-								0: begin
-									saida <= P1 == P2 & P2 == P3;
-									write <= 1;
-								end
-								1: begin
-									$display("Saida : %d", saida);	
-									write <= 0;
-								end
-							endcase
-							controlador = controlador + 1;
-						end
-					end
+				if (i < 480)begin
+					count <= 3;
+					j <= 0;
+					
 				end
-				count <= count + 1;
+		    		else count <= 4;
 			end
 			3: begin
-				end_triangulo = end_triangulo + 1;
-				count <= count + 1;
+				if (j < 640)begin
+					//$display (" i = %d - j = %d" , i , j);
+					//$display ("grava = %d" ,saida);
+					// sempe alterar aqui (dentro for)
+					ptx <= i;
+					pty <= j;
+					saida <= P1 == P2 & P2 == P3;
+					if (pode_ler == 1) $display("data : %d", data);	
+					//altera até aqui (dentro for)
+					j <= j + 1;
+					count <= 3;	
+				end
+				else begin
+					i <= i + 1;
+					count = 2;
+				end
 			end
-			4:begin
-				if (end_triangulo > 2)count <= 10;
-				else count <= 10;
+			4: begin
+				count <= 5;
+				write <= 0;
 			end
-			10: $finish;
+
+
+			5: begin
+				if (pode_ler == 0) pode_ler <= 1;
+				end_triangulo <= end_triangulo + 1;
+				count <= 6;
+			end
+			6:begin
+				if (end_triangulo > 3) $finish;
+				else count <= 1;
+			end
+			
 		endcase
 	end	
-	initial begin
 
-	end
 endmodule
