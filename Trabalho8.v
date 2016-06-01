@@ -1,3 +1,10 @@
+/*
+Usar Clock_25
+Contador até 800x525
+VGA_HS negativo para H_Sync 660 até 756
+Negativo para v 494 até 495
+
+*/
 module trab8(
 	input CLOCK_50,
 	output VGA_HS ,
